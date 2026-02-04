@@ -355,16 +355,18 @@
     }
 
     if (!hasStarted) {
+      const rewindVerb = CONFIG.rewindMode === "hold" ? "Hold" : "Tap";
       setOverlay(
         true,
         "Time-Warp Snake",
-        `Swipe to turn. Hold the bottom rewind pedal (or Space) to rewind. TPS=${CONFIG.tps}, history=${CONFIG.historySeconds}s.`
+        `Swipe to turn. ${rewindVerb} the bottom rewind pedal (or Space) to rewind. TPS=${CONFIG.tps}, history=${CONFIG.historySeconds}s.`
       );
       return;
     }
 
     if (gameOver) {
-      setOverlay(true, "CRASH!", "Hold REWIND (bottom pedal / Space) to go back, or press R to restart.");
+      const rewindVerb = CONFIG.rewindMode === "hold" ? "Hold" : "Tap";
+      setOverlay(true, "CRASH!", `${rewindVerb} REWIND (bottom pedal / Space) to go back, or press R to restart.`);
       return;
     }
 
@@ -469,6 +471,7 @@
 
   function onTouchStart(e) {
     e.preventDefault();
+    let shouldToggle = false;
     for (const t of e.changedTouches) {
       const inPedal = isInPedalZone(t.clientX, t.clientY);
       activeTouches.set(t.identifier, {
@@ -478,13 +481,15 @@
       });
 
       if (inPedal) {
-        if (CONFIG.rewindMode === "toggle") {
-          toggleRewinding();
-        } else {
-          rewindTouchCount += 1;
-          syncRewindHoldState();
-        }
+        if (CONFIG.rewindMode === "toggle") shouldToggle = true;
+        else rewindTouchCount += 1;
       }
+    }
+
+    if (CONFIG.rewindMode === "toggle") {
+      if (shouldToggle) toggleRewinding();
+    } else {
+      syncRewindHoldState();
     }
   }
 
@@ -650,4 +655,3 @@
     }
   }
 })();
-
