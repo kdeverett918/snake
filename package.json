@@ -2,11 +2,11 @@
   "name": "snake",
   "version": "1.0.0",
   "description": "Snake with gravity that changes when you eat food",
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js",
-    "test": "node --check game.js && node --check server.js && node smoke-test.js"
+    "start": "node index.js",
+    "dev": "node index.js",
+    "test": "node --check game.js && node --check server.js && node --check index.js && node smoke-test.js"
   },
   "keywords": ["snake", "game", "javascript"],
   "author": "",
