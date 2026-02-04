@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Portal Snake</title>
+    <title>Time-Warp Snake</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -14,28 +14,36 @@
           <div class="hud__item"><span class="hud__label">Best</span> <span id="best">0</span></div>
         </div>
         <div class="hud hud--right">
-          <div class="hud__item"><span class="hud__label">Portal</span> <span id="portalLegend">Pink -&gt; Cyan</span></div>
+          <div class="hud__item"><span class="hud__label">Rewind</span> <span id="rewindMode">Hold</span></div>
         </div>
       </header>
 
       <section class="stage" aria-label="Game area">
         <div class="boardWrap">
           <canvas id="game" width="640" height="640"></canvas>
+          <div class="rewindFx" id="rewindFx" aria-hidden="true"></div>
           <div class="overlay" id="overlay" aria-live="polite">
             <div class="overlay__panel">
-              <h1 class="overlay__title" id="overlayTitle">Portal Snake</h1>
-              <p class="overlay__body" id="overlayBody">Press an arrow key or WASD to start.</p>
-              <p class="overlay__hint">Space: pause &middot; R: restart</p>
+              <h1 class="overlay__title" id="overlayTitle">Time-Warp Snake</h1>
+              <p class="overlay__body" id="overlayBody">Swipe (mobile) or use arrow keys / WASD to start.</p>
+              <p class="overlay__hint">Hold pedal (bottom) or Space to rewind &middot; R: restart</p>
             </div>
           </div>
         </div>
       </section>
 
       <footer class="footer">
-        <p><span class="k">Controls</span>: Arrow keys / WASD &middot; <span class="k">Space</span> pause &middot; <span class="k">R</span> restart</p>
-        <p><span class="k">Rule</span>: Eat the pink portal fruit to teleport to the cyan exit portal.</p>
+        <p><span class="k">Controls</span>: Swipe (mobile) / Arrow keys / WASD</p>
+        <p><span class="k">Time-warp</span>: Hold the bottom pedal (or Space) to rewind out of crashes.</p>
       </footer>
     </main>
+
+    <div class="pedal" id="rewindPedal" role="button" aria-label="Hold to rewind">
+      <div class="pedal__inner">
+        <div class="pedal__title">HOLD TO REWIND</div>
+        <div class="pedal__subtitle">Swipe above to turn</div>
+      </div>
+    </div>
 
     <script src="game.js"></script>
   </body>

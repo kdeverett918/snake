@@ -120,7 +120,7 @@ if (require.main === module) {
   const server = createAppServer({ rootDir: __dirname });
   server.listen(port, host, () => {
     // eslint-disable-next-line no-console
-    console.log(`Portal Snake running on http://${host}:${port}`);
+    console.log(`Time-Warp Snake running on http://${host}:${port}`);
   });
 }
 

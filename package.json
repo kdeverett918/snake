@@ -1,7 +1,7 @@
 {
   "name": "snake",
   "version": "1.0.0",
-  "description": "Snake with portal food that teleports you",
+  "description": "Snake with a time-warp rewind mechanic (mobile-first)",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
