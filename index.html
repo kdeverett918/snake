@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Gravity Snake</title>
+    <title>Portal Snake</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -14,7 +14,7 @@
           <div class="hud__item"><span class="hud__label">Best</span> <span id="best">0</span></div>
         </div>
         <div class="hud hud--right">
-          <div class="hud__item"><span class="hud__label">Gravity</span> <span id="gravity">→</span></div>
+          <div class="hud__item"><span class="hud__label">Portal</span> <span id="portalLegend">Pink -&gt; Cyan</span></div>
         </div>
       </header>
 
@@ -23,21 +23,20 @@
           <canvas id="game" width="480" height="480"></canvas>
           <div class="overlay" id="overlay" aria-live="polite">
             <div class="overlay__panel">
-              <h1 class="overlay__title" id="overlayTitle">Gravity Snake</h1>
+              <h1 class="overlay__title" id="overlayTitle">Portal Snake</h1>
               <p class="overlay__body" id="overlayBody">Press an arrow key or WASD to start.</p>
-              <p class="overlay__hint">Space: pause • R: restart</p>
+              <p class="overlay__hint">Space: pause &middot; R: restart</p>
             </div>
           </div>
         </div>
       </section>
 
       <footer class="footer">
-        <p><span class="k">Controls</span>: Arrow keys / WASD • <span class="k">Space</span> pause • <span class="k">R</span> restart</p>
-        <p><span class="k">Rule</span>: Eat food to flip gravity (and your direction) to a new random direction.</p>
+        <p><span class="k">Controls</span>: Arrow keys / WASD &middot; <span class="k">Space</span> pause &middot; <span class="k">R</span> restart</p>
+        <p><span class="k">Rule</span>: Eat the pink portal fruit to teleport to the cyan exit portal.</p>
       </footer>
     </main>
 
     <script src="game.js"></script>
   </body>
 </html>
-

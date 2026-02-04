@@ -7,7 +7,7 @@
   const SPEED_PER_5_FOODS = 0.5;
   const MAX_MOVES_PER_SEC = 14;
   const CELL_SIZE = 20;
-  const BEST_SCORE_KEY = "gravitySnakeBestScore";
+  const BEST_SCORE_KEY = "portalSnakeBestScore";
 
   const DIR_UP = 0;
   const DIR_RIGHT = 1;
@@ -15,10 +15,10 @@
   const DIR_LEFT = 3;
 
   const DIRS = [
-    { dx: 0, dy: -1, ch: "↑" },
-    { dx: 1, dy: 0, ch: "→" },
-    { dx: 0, dy: 1, ch: "↓" },
-    { dx: -1, dy: 0, ch: "←" },
+    { dx: 0, dy: -1 },
+    { dx: 1, dy: 0 },
+    { dx: 0, dy: 1 },
+    { dx: -1, dy: 0 },
   ];
 
   const canvas = document.getElementById("game");
@@ -26,7 +26,6 @@
 
   const scoreEl = document.getElementById("score");
   const bestEl = document.getElementById("best");
-  const gravityEl = document.getElementById("gravity");
   const overlayEl = document.getElementById("overlay");
   const overlayTitleEl = document.getElementById("overlayTitle");
   const overlayBodyEl = document.getElementById("overlayBody");
@@ -47,11 +46,11 @@
   /** @type {number | null} */
   let pendingDir = null;
 
-  /** @type {number} */
-  let gravityDir = DIR_RIGHT;
+  /** @type {{x:number,y:number} | null} */
+  let portalFood = null;
 
   /** @type {{x:number,y:number} | null} */
-  let food = null;
+  let portalExit = null;
 
   let score = 0;
   let bestScore = loadBestScore();
@@ -89,8 +88,9 @@
 
     dir = null;
     pendingDir = null;
-    gravityDir = DIR_RIGHT;
-    food = spawnFood();
+    const portalPair = spawnPortalPair();
+    portalFood = portalPair ? portalPair.food : null;
+    portalExit = portalPair ? portalPair.exit : null;
 
     score = 0;
     status = "running";
@@ -118,7 +118,7 @@
     return `${x},${y}`;
   }
 
-  function spawnFood() {
+  function collectEmptyCells() {
     const occupied = new Set();
     for (const s of snake) occupied.add(keyFor(s.x, s.y));
 
@@ -129,26 +129,25 @@
       }
     }
 
-    if (empties.length === 0) return null;
-    return empties[(Math.random() * empties.length) | 0];
+    return empties;
   }
 
-  function chooseNewGravityDir(dirBeforeFlip) {
-    const prev = gravityDir;
-    const excluded = new Set([prev]);
+  function pickRandomIndex(maxExclusive) {
+    return (Math.random() * maxExclusive) | 0;
+  }
 
-    if (snake.length > 1 && dirBeforeFlip !== null) {
-      excluded.add((dirBeforeFlip + 2) % 4);
-    }
+  function spawnPortalPair() {
+    const empties = collectEmptyCells();
+    if (empties.length < 2) return null;
 
-    let options = [DIR_UP, DIR_RIGHT, DIR_DOWN, DIR_LEFT].filter((d) => !excluded.has(d));
+    const iFood = pickRandomIndex(empties.length);
+    const foodCell = empties[iFood];
+    empties.splice(iFood, 1);
 
-    // Fallback if exclusions are too strict (should be rare / edge-casey)
-    if (options.length === 0) {
-      options = [DIR_UP, DIR_RIGHT, DIR_DOWN, DIR_LEFT].filter((d) => d !== prev);
-    }
+    const iExit = pickRandomIndex(empties.length);
+    const exitCell = empties[iExit];
 
-    return options[(Math.random() * options.length) | 0];
+    return { food: foodCell, exit: exitCell };
   }
 
   function wouldCollideSelf(x, y, isEating) {
@@ -169,19 +168,26 @@
 
     const d = DIRS[dir];
     const head = snake[0];
-    const next = { x: head.x + d.dx, y: head.y + d.dy };
+    const stepTo = { x: head.x + d.dx, y: head.y + d.dy };
 
     // Wall collision (die on wall)
-    if (next.x < 0 || next.x >= GRID_W || next.y < 0 || next.y >= GRID_H) {
+    if (stepTo.x < 0 || stepTo.x >= GRID_W || stepTo.y < 0 || stepTo.y >= GRID_H) {
       status = "gameover";
       updateOverlay();
       return;
     }
 
-    const isEating = !!food && next.x === food.x && next.y === food.y;
+    const isEatingPortal = !!portalFood && stepTo.x === portalFood.x && stepTo.y === portalFood.y;
+    const next = isEatingPortal ? portalExit : stepTo;
+    if (!next) {
+      status = "win";
+      updateHud();
+      updateOverlay();
+      return;
+    }
 
     // Self collision
-    if (wouldCollideSelf(next.x, next.y, isEating)) {
+    if (wouldCollideSelf(next.x, next.y, isEatingPortal)) {
       status = "gameover";
       updateOverlay();
       return;
@@ -189,20 +195,17 @@
 
     snake.unshift(next);
 
-    if (isEating) {
+    if (isEatingPortal) {
       score += 1;
       if (score > bestScore) {
         bestScore = score;
         saveBestScore(bestScore);
       }
 
-      const dirBeforeFlip = dir;
-      gravityDir = chooseNewGravityDir(dirBeforeFlip);
-      dir = gravityDir;
-      pendingDir = null;
-
-      food = spawnFood();
-      if (!food) {
+      const portalPair = spawnPortalPair();
+      portalFood = portalPair ? portalPair.food : null;
+      portalExit = portalPair ? portalPair.exit : null;
+      if (!portalFood || !portalExit) {
         status = "win";
         updateHud();
         updateOverlay();
@@ -218,7 +221,6 @@
   function updateHud() {
     scoreEl.textContent = String(score);
     bestEl.textContent = String(bestScore);
-    gravityEl.textContent = DIRS[gravityDir].ch;
   }
 
   function setOverlay(visible, title, body) {
@@ -229,7 +231,7 @@
 
   function updateOverlay() {
     if (!hasStarted && status === "running") {
-      setOverlay(true, "Gravity Snake", "Press an arrow key or WASD to start.");
+      setOverlay(true, "Portal Snake", "Press an arrow key or WASD to start. Eat pink to teleport to cyan.");
       return;
     }
 
@@ -366,20 +368,52 @@
     }
     ctx.stroke();
 
-    // food
-    if (food) {
-      const cx = food.x * CELL_SIZE + CELL_SIZE / 2;
-      const cy = food.y * CELL_SIZE + CELL_SIZE / 2;
+    // portal exit
+    if (portalExit) {
+      const ex = portalExit.x * CELL_SIZE + CELL_SIZE / 2;
+      const ey = portalExit.y * CELL_SIZE + CELL_SIZE / 2;
+      const r = CELL_SIZE * 0.36;
+
+      ctx.strokeStyle = "rgba(34, 211, 238, 0.85)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(ex, ey, r, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.strokeStyle = "rgba(34, 211, 238, 0.25)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(ex, ey, r * 0.62, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.strokeStyle = "rgba(34, 211, 238, 0.55)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(ex, ey, r, Math.PI * 0.15, Math.PI * 0.55);
+      ctx.arc(ex, ey, r, Math.PI * 1.15, Math.PI * 1.45);
+      ctx.stroke();
+    }
+
+    // portal food
+    if (portalFood) {
+      const fx = portalFood.x * CELL_SIZE + CELL_SIZE / 2;
+      const fy = portalFood.y * CELL_SIZE + CELL_SIZE / 2;
       const r = CELL_SIZE * 0.34;
       ctx.fillStyle = "#fb7185";
       ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.arc(fx, fy, r, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.fillStyle = "rgba(255,255,255,0.22)";
       ctx.beginPath();
-      ctx.arc(cx - r * 0.25, cy - r * 0.25, r * 0.35, 0, Math.PI * 2);
+      ctx.arc(fx - r * 0.25, fy - r * 0.25, r * 0.35, 0, Math.PI * 2);
       ctx.fill();
+
+      ctx.strokeStyle = "rgba(34, 211, 238, 0.35)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(fx, fy, r + 2, 0, Math.PI * 2);
+      ctx.stroke();
     }
 
     // snake
@@ -439,4 +473,3 @@
     }
   }
 })();
-

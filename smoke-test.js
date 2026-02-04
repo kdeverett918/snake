@@ -27,7 +27,7 @@ async function main() {
     const jsType = js.headers.get("content-type") || "";
     assert(jsType.includes("javascript") || jsType.includes("text/javascript"), "GET /game.js expected JS content-type");
     const jsBody = await js.text();
-    assert(jsBody.includes("Gravity Snake"), "game.js should load (sanity check)");
+    assert(jsBody.includes("Portal Snake"), "game.js should load (sanity check)");
   } finally {
     await new Promise((resolve) => server.close(resolve));
   }
@@ -38,4 +38,3 @@ main().catch((err) => {
   console.error(err);
   process.exitCode = 1;
 });
-
