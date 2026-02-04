@@ -1,11 +1,11 @@
 (() => {
   "use strict";
 
-  const GRID_W = 24;
-  const GRID_H = 24;
-  const BASE_MOVES_PER_SEC = 8;
-  const SPEED_PER_5_FOODS = 0.5;
-  const MAX_MOVES_PER_SEC = 14;
+  const GRID_W = 32;
+  const GRID_H = 32;
+  const BASE_MOVES_PER_SEC = 6;
+  const SPEED_PER_5_FOODS = 0.4;
+  const MAX_MOVES_PER_SEC = 12;
   const CELL_SIZE = 20;
   const BEST_SCORE_KEY = "portalSnakeBestScore";
 
@@ -43,8 +43,8 @@
   /** @type {number | null} */
   let dir = null;
 
-  /** @type {number | null} */
-  let pendingDir = null;
+  /** @type {number[]} */
+  let dirQueue = [];
 
   /** @type {{x:number,y:number} | null} */
   let portalFood = null;
@@ -87,7 +87,7 @@
     ];
 
     dir = null;
-    pendingDir = null;
+    dirQueue = [];
     const portalPair = spawnPortalPair();
     portalFood = portalPair ? portalPair.food : null;
     portalExit = portalPair ? portalPair.exit : null;
@@ -140,12 +140,16 @@
     const empties = collectEmptyCells();
     if (empties.length < 2) return null;
 
-    const iFood = pickRandomIndex(empties.length);
-    const foodCell = empties[iFood];
-    empties.splice(iFood, 1);
+    const isSafePortalCell = (c) => c.x >= 1 && c.x < GRID_W - 1 && c.y >= 1 && c.y < GRID_H - 1;
 
-    const iExit = pickRandomIndex(empties.length);
-    const exitCell = empties[iExit];
+    const safeForFood = empties.filter(isSafePortalCell);
+    const foodPool = safeForFood.length >= 2 ? safeForFood : empties;
+    const foodCell = foodPool[pickRandomIndex(foodPool.length)];
+
+    const remaining = empties.filter((c) => c.x !== foodCell.x || c.y !== foodCell.y);
+    const safeForExit = remaining.filter(isSafePortalCell);
+    const exitPool = safeForExit.length >= 1 ? safeForExit : remaining;
+    const exitCell = exitPool[pickRandomIndex(exitPool.length)];
 
     return { food: foodCell, exit: exitCell };
   }
@@ -161,10 +165,12 @@
   function step() {
     if (dir === null) return;
 
-    if (pendingDir !== null && !isOpposite(pendingDir, dir)) {
-      dir = pendingDir;
+    if (dirQueue.length > 0) {
+      const nextDir = dirQueue.shift();
+      if (typeof nextDir === "number" && !isOpposite(nextDir, dir)) {
+        dir = nextDir;
+      }
     }
-    pendingDir = null;
 
     const d = DIRS[dir];
     const head = snake[0];
@@ -201,6 +207,9 @@
         bestScore = score;
         saveBestScore(bestScore);
       }
+
+      // Teleport changes context a lot; clear buffered inputs so controls feel snappy.
+      dirQueue = [];
 
       const portalPair = spawnPortalPair();
       portalFood = portalPair ? portalPair.food : null;
@@ -260,14 +269,24 @@
     if (!hasStarted) {
       hasStarted = true;
       dir = nextDir;
-      pendingDir = null;
+      dirQueue = [];
       accumulatorMs = tickMs(); // start moving immediately
       updateOverlay();
       return;
     }
 
-    if (dir !== null && isOpposite(nextDir, dir)) return;
-    pendingDir = nextDir;
+    const lastPlannedDir = dirQueue.length > 0 ? dirQueue[dirQueue.length - 1] : dir;
+    if (lastPlannedDir !== null) {
+      if (nextDir === lastPlannedDir) return;
+      if (isOpposite(nextDir, lastPlannedDir)) return;
+    }
+
+    const MAX_QUEUE = 2;
+    if (dirQueue.length < MAX_QUEUE) {
+      dirQueue.push(nextDir);
+    } else {
+      dirQueue[dirQueue.length - 1] = nextDir;
+    }
   }
 
   window.addEventListener(
