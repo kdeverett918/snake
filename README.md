@@ -1,11 +1,22 @@
-# Snake
+# Gravity Snake
 
-A classic snake game.
+A tiny browser Snake game where **eating food changes gravity direction** — and your movement direction immediately becomes the new gravity direction.
 
-## Getting Started
+## Run
+- Open `index.html` in a browser, or
+- Serve it locally and open the printed URL:
+  - `npm start`
 
-Open `index.html` in your browser to play.
+## Controls
+- Move: Arrow keys / WASD
+- Pause: Space
+- Restart: R
 
-## License
+## Render deployment
+This repo includes a `render.yaml` Blueprint.
 
-MIT
+- **Blueprint (recommended):** In Render, choose “New” → “Blueprint”, select this GitHub repo, then deploy.
+- **Manual:** Create a **Web Service**:
+  - Build Command: `npm install` (or `yarn install`)
+  - Start Command: `npm start` (or `yarn start`)
+  - Health Check Path: `/healthz`
